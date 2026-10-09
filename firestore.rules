@@ -1,0 +1,32 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Funzione di utilità per verificare utente autenticato
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Verifica che l'utente stia accedendo solo ai propri dati
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Dati personali dell'agenda 12-Week Year e profilo
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      // Sotto-collezioni (turni, tattiche, obiettivi, misurazioni fisiche)
+      match /{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Robot Salvadanaio: Archivio backup cifrati dell'utente
+    match /backups/{backupId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+    }
+  }
+}

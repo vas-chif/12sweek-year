@@ -20,15 +20,18 @@
     "dev": "quasar dev",
     "build": "quasar build",
     "typecheck": "vue-tsc --noEmit",
+    "setup:hooks": "chmod +x hooks/*.sh && cp hooks/pre-commit-guard.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
     "postinstall": "quasar prepare --silent"
   },
   "dependencies": {
     "@quasar/extras": "^2.1.0",
+    "firebase": "^11.4.0",
     "pinia": "^4.0.2",
     "quasar": "^2.35.0",
     "vue": "^3.5.22",
     "vue-i18n": "^11.3.0",
-    "vue-router": "^5.0.6"
+    "vue-router": "^5.0.6",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@intlify/unplugin-vue-i18n": "^11.0.0",

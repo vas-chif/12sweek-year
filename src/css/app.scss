@@ -1,1 +1,314 @@
-// app global css
+// TimesManagement 12WY - Global Styles & Martial Dark Slate System
+
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.body--dark {
+  background-color: #0b1120;
+  color: #f1f5f9;
+}
+
+// Glass & Martial Card Surfaces
+.glass-panel {
+  background: rgba(30, 41, 59, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(51, 65, 85, 0.65);
+  border-radius: 12px;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover {
+    border-color: rgba(2, 132, 199, 0.5);
+  }
+}
+
+// Badges priorità ABCDE
+.badge-priority-a {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  font-weight: 800;
+}
+
+.badge-priority-b {
+  background-color: #0ea5e9 !important;
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+.badge-priority-c {
+  background-color: #64748b !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+.badge-priority-d {
+  background-color: #a855f7 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+.badge-priority-e {
+  background-color: #475569 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+// WAM Score Badges
+.score-badge-high {
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.2) 0%,
+    rgba(5, 150, 105, 0.3) 100%
+  );
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  color: #34d399;
+}
+
+.score-badge-low {
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.2) 0%,
+    rgba(220, 38, 38, 0.3) 100%
+  );
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #f87171;
+}
+
+.tactic-completed {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+// ── Dark Slate System Utilities ────────────────────────────────────────────────
+.bg-dark-page {
+  background-color: #0b1120 !important;
+}
+
+.bg-slate-950 {
+  background-color: #020617 !important;
+}
+
+.bg-slate-900 {
+  background-color: #0f172a !important;
+}
+
+.bg-slate-800 {
+  background-color: #1e293b !important;
+}
+
+.bg-slate-700 {
+  background-color: #334155 !important;
+}
+
+// Border Utilities
+.border {
+  border-style: solid !important;
+  border-width: 1px !important;
+}
+
+.border-t {
+  border-top-style: solid !important;
+  border-top-width: 1px !important;
+}
+
+.border-b {
+  border-bottom-style: solid !important;
+  border-bottom-width: 1px !important;
+}
+
+.border-r {
+  border-right-style: solid !important;
+  border-right-width: 1px !important;
+}
+
+.border-l-4 {
+  border-left-width: 4px !important;
+  border-left-style: solid !important;
+}
+
+.border-slate-800 {
+  border-color: #1e293b !important;
+}
+
+.border-slate-700 {
+  border-color: #334155 !important;
+}
+
+.border-slate-600 {
+  border-color: #475569 !important;
+}
+
+.border-emerald-500 {
+  border-color: #10b981 !important;
+}
+
+.border-amber-500 {
+  border-color: #f59e0b !important;
+}
+
+// ── Martial Bottom Navigation Footer & High-Contrast Tabs ──────────────────────
+.martial-bottom-footer {
+  background-color: #0b1120 !important;
+  border-top: 1px solid #334155 !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.7) !important;
+  z-index: 2000;
+}
+
+.martial-tabs {
+  background-color: transparent !important;
+  min-height: 58px;
+
+  .q-tab {
+    min-height: 58px;
+    padding: 6px 10px;
+    color: #94a3b8; // Slate 400 - nitido e ad alto contrasto
+    opacity: 0.9;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    .q-tab__icon {
+      font-size: 24px;
+      color: #94a3b8;
+      transition:
+        color 0.2s ease,
+        transform 0.2s ease;
+    }
+
+    .q-tab__label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      margin-top: 2px;
+      color: #94a3b8;
+    }
+
+    &:hover {
+      opacity: 1;
+      color: #f1f5f9;
+      .q-tab__icon,
+      .q-tab__label {
+        color: #f1f5f9;
+      }
+    }
+
+    &.q-tab--active {
+      opacity: 1;
+      color: #ffffff !important;
+      background: rgba(56, 189, 248, 0.12) !important;
+      border-radius: 8px 8px 0 0;
+
+      .q-tab__icon {
+        color: #38bdf8 !important; // Sky 400 brillante ad altissima visibilità
+        transform: scale(1.12);
+        filter: drop-shadow(0 2px 6px rgba(56, 189, 248, 0.5));
+      }
+
+      .q-tab__label {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.4px;
+      }
+
+      .q-tab__indicator {
+        height: 3px !important;
+        background-color: #38bdf8 !important;
+        box-shadow: 0 -1px 8px rgba(56, 189, 248, 0.8);
+      }
+    }
+  }
+}
+
+// Martial Top Header
+.martial-top-header {
+  background-color: #0f172a !important;
+  border-bottom: 1px solid #334155 !important;
+}
+
+// Mobile Bottom Nav spacing
+.q-page {
+  padding-bottom: 76px;
+}
+
+// A4 Print Optimizations - Stampa su singolo foglio A4
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm 8mm 10mm;
+  }
+
+  body,
+  .q-page,
+  .q-layout {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    padding-bottom: 0 !important;
+  }
+
+  .no-print,
+  .q-header,
+  .q-footer,
+  .q-drawer,
+  .q-btn,
+  .q-dialog,
+  .q-notifications {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-header {
+    border-bottom: 2px solid #0f172a;
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+  }
+
+  .glass-panel,
+  .q-card {
+    background: #ffffff !important;
+    border: 1px solid #94a3b8 !important;
+    box-shadow: none !important;
+    color: #0f172a !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .q-table__container {
+    background: #ffffff !important;
+    border: 1px solid #94a3b8 !important;
+    box-shadow: none !important;
+    color: #0f172a !important;
+  }
+
+  .q-table thead tr th {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    border-bottom: 1.5px solid #0f172a !important;
+  }
+
+  .q-table tbody tr td {
+    border-bottom: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+
+  // Checkbox vuote stampate pronte a penna
+  .print-checkbox {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #0f172a;
+    border-radius: 3px;
+    margin-right: 6px;
+  }
+}
+
+.print-only {
+  display: none;
+}

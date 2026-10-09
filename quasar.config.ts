@@ -42,8 +42,8 @@ export default defineConfig(ctx => {
         // extendTsConfig (tsConfig) {}
       },
 
-      // https://v2.quasar.dev/quasar-cli-vite/page-routing-with-vue-router#filename-based-routing
-      filenameBasedRouting: true,
+      // Explicit routes via src/router/routes.ts
+      filenameBasedRouting: false,
 
       vueRouterMode: "hash", // available values: 'hash', 'history'
       // vueRouterBase,
@@ -55,8 +55,19 @@ export default defineConfig(ctx => {
       // minify: false,
       // distDir
 
-      // extendViteConf (viteConf) {},
-      // viteVuePluginOptions: {},
+      extendViteConf(viteConf) {
+        viteConf.resolve = viteConf.resolve || {};
+        if (Array.isArray(viteConf.resolve.alias)) {
+          viteConf.resolve.alias.push({
+            find: "@",
+            replacement: ctx.appPaths.resolve.app("src")
+          });
+        } else {
+          viteConf.resolve.alias = Object.assign({}, viteConf.resolve.alias, {
+            "@": ctx.appPaths.resolve.app("src")
+          });
+        }
+      },
 
       // to write components with JSX/TSX:
       // https://v2.quasar.dev/quasar-cli-vite/handling-vite#jsx-tsx
@@ -104,7 +115,7 @@ export default defineConfig(ctx => {
       // directives: [],
 
       // Quasar plugins
-      plugins: []
+      plugins: ["Notify", "Dark", "Dialog"]
     },
 
     // animations: 'all', // --- includes all animations
