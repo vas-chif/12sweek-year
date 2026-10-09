@@ -22,7 +22,7 @@ import {
   onAuthStateChanged,
   type User
 } from "firebase/auth";
-import { auth, db } from "@/services/firebase";
+import { auth, db, isFirebaseConfigured } from "@/services/firebase";
 
 // ── 2. Tipi & Schemi Zod ─────────────────────────────────────────────────────────
 import {
@@ -50,11 +50,22 @@ let authPromise: Promise<User> | null = null;
  */
 export async function ensureAuthUser(): Promise<User> {
   if (currentUser) return currentUser;
+
+  // Fallback istantaneo se Firebase non è configurato
+  if (!isFirebaseConfigured() || !auth) {
+    const fallbackUid =
+      localStorage.getItem("twelve_week_client_id") || `device_${Date.now()}`;
+    localStorage.setItem("twelve_week_client_id", fallbackUid);
+    currentUser = { uid: fallbackUid } as User;
+    return currentUser;
+  }
+
   if (authPromise) return authPromise;
 
+  const authTarget = auth;
   authPromise = new Promise((resolve, reject) => {
     const unsubscribe = onAuthStateChanged(
-      auth,
+      authTarget,
       async user => {
         unsubscribe();
         if (user) {
@@ -62,7 +73,7 @@ export async function ensureAuthUser(): Promise<User> {
           resolve(user);
         } else {
           try {
-            const userCred = await signInAnonymously(auth);
+            const userCred = await signInAnonymously(authTarget);
             currentUser = userCred.user;
             resolve(currentUser);
           } catch (err: unknown) {
@@ -70,13 +81,12 @@ export async function ensureAuthUser(): Promise<User> {
               "Accesso anonimo Firebase non riuscito, uso fallback:",
               err
             );
-            // Fallback: se l'autenticazione anonima è disabilitata nella console,
-            // usiamo un identificativo deterministico locale per il dispositivo
             const fallbackUid =
               localStorage.getItem("twelve_week_client_id") ||
               `device_${Date.now()}`;
             localStorage.setItem("twelve_week_client_id", fallbackUid);
-            resolve({ uid: fallbackUid } as User);
+            currentUser = { uid: fallbackUid } as User;
+            resolve(currentUser);
           }
         }
       },
@@ -94,13 +104,22 @@ export async function ensureAuthUser(): Promise<User> {
 export async function savePlanToFirestore(
   plan: QuarterPlan
 ): Promise<SyncResult> {
+  if (!isFirebaseConfigured() || !db) {
+    return {
+      success: false,
+      message:
+        "Sincronizzazione Cloud disabilitata: Firebase non configurato in .env"
+    };
+  }
+
+  const dbInstance = db;
   try {
     const user = await ensureAuthUser();
     const userId = user.uid;
     const nowIso = new Date().toISOString();
 
     // 1. Documento principale Utente con Metadata
-    const userDocRef = doc(db, "users", userId);
+    const userDocRef = doc(dbInstance, "users", userId);
     await setDoc(
       userDocRef,
       {
@@ -116,18 +135,18 @@ export async function savePlanToFirestore(
     );
 
     // 2. Snapshot atomico completo (per ripristino istantaneo con Zod safeParse)
-    const snapshotDocRef = doc(db, "users", userId, "state", "current");
+    const snapshotDocRef = doc(dbInstance, "users", userId, "state", "current");
     await setDoc(snapshotDocRef, {
       ...plan,
       _syncedAt: nowIso
     });
 
     // 3. Salvataggio granulare con Batch per query e dashboard avanzate
-    const batch = writeBatch(db);
+    const batch = writeBatch(dbInstance);
 
     // 3a. Sub-collezione Tactics
     plan.tactics.forEach((tactic: TacticItem) => {
-      const tacticRef = doc(db, "users", userId, "tactics", tactic.id);
+      const tacticRef = doc(dbInstance, "users", userId, "tactics", tactic.id);
       batch.set(tacticRef, {
         ...tactic,
         userId,
@@ -138,7 +157,7 @@ export async function savePlanToFirestore(
     // 3b. Sub-collezione Habits (date chiave)
     Object.entries(plan.dailyHabits).forEach(
       ([dateStr, habit]: [string, DailyHabit]) => {
-        const habitRef = doc(db, "users", userId, "habits", dateStr);
+        const habitRef = doc(dbInstance, "users", userId, "habits", dateStr);
         batch.set(habitRef, {
           ...habit,
           userId,
@@ -149,7 +168,13 @@ export async function savePlanToFirestore(
 
     // 3c. Sub-collezione Misurazioni Черепаха
     plan.physicalMetrics.history.forEach((m: PhysicalMeasurementRecord) => {
-      const mRef = doc(db, "users", userId, "measurements", m.id || m.date);
+      const mRef = doc(
+        dbInstance,
+        "users",
+        userId,
+        "measurements",
+        m.id || m.date
+      );
       batch.set(mRef, {
         ...m,
         userId,
@@ -159,7 +184,7 @@ export async function savePlanToFirestore(
 
     // 3d. Sub-collezione Macro-Obiettivi
     plan.goals.forEach((g: LifeGoal) => {
-      const gRef = doc(db, "users", userId, "goals", g.id);
+      const gRef = doc(dbInstance, "users", userId, "goals", g.id);
       batch.set(gRef, {
         ...g,
         userId,
@@ -193,11 +218,20 @@ export async function pullPlanFromFirestore(): Promise<{
   message: string;
   error?: string;
 }> {
+  if (!isFirebaseConfigured() || !db) {
+    return {
+      success: false,
+      message:
+        "Sincronizzazione Cloud disabilitata: Firebase non configurato in .env"
+    };
+  }
+
+  const dbInstance = db;
   try {
     const user = await ensureAuthUser();
     const userId = user.uid;
 
-    const snapshotDocRef = doc(db, "users", userId, "state", "current");
+    const snapshotDocRef = doc(dbInstance, "users", userId, "state", "current");
     const docSnap = await getDoc(snapshotDocRef);
 
     if (!docSnap.exists()) {
@@ -243,13 +277,21 @@ export async function pullPlanFromFirestore(): Promise<{
 export async function createRobotBackup(
   plan: QuarterPlan
 ): Promise<SyncResult> {
+  if (!isFirebaseConfigured() || !db) {
+    return {
+      success: false,
+      message: "Backup Cloud disabilitato: Firebase non configurato in .env"
+    };
+  }
+
+  const dbInstance = db;
   try {
     const user = await ensureAuthUser();
     const userId = user.uid;
     const timestamp = new Date().toISOString();
     const backupId = `backup_${timestamp.replace(/[:.]/g, "-")}`;
 
-    const backupDocRef = doc(db, "users", userId, "backups", backupId);
+    const backupDocRef = doc(dbInstance, "users", userId, "backups", backupId);
     await setDoc(backupDocRef, {
       backupId,
       userId,

@@ -16,22 +16,56 @@ import { getFirestore, type Firestore } from "firebase/firestore";
 // ── 2. Configurazione Progetto ──────────────────────────────────────────────────
 // Lettura protetta da variabili d'ambiente (.env protetto e non tracciato su Git)
 export const firebaseConfig = {
-  apiKey: (import.meta.env.VITE_FIREBASE_API_KEY as string | undefined) ?? "",
-  authDomain:
-    (import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string | undefined) ?? "",
-  projectId:
-    (import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined) ?? "",
-  storageBucket:
-    (import.meta.env.VITE_FIREBASE_STORAGE_BUCKET as string | undefined) ?? "",
-  messagingSenderId:
-    (import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID as string | undefined) ??
-    "",
-  appId: (import.meta.env.VITE_FIREBASE_APP_ID as string | undefined) ?? ""
+  apiKey: String(import.meta.env.VITE_FIREBASE_API_KEY ?? ""),
+  authDomain: String(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? ""),
+  projectId: String(import.meta.env.VITE_FIREBASE_PROJECT_ID ?? ""),
+  storageBucket: String(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ?? ""),
+  messagingSenderId: String(
+    import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? ""
+  ),
+  appId: String(import.meta.env.VITE_FIREBASE_APP_ID ?? "")
 };
 
-// ── 3. Inizializzazione Singleton ──────────────────────────────────────────────
-export const firebaseApp: FirebaseApp =
-  getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]!;
+// ── 3. Inizializzazione Sicura & Difensiva (Local-First Fallback) ─────────────
+let appInstance: FirebaseApp | null = null;
+let authInstance: Auth | null = null;
+let dbInstance: Firestore | null = null;
 
-export const auth: Auth = getAuth(firebaseApp);
-export const db: Firestore = getFirestore(firebaseApp);
+const hasValidConfig = Boolean(
+  firebaseConfig.apiKey &&
+  firebaseConfig.apiKey.length > 10 &&
+  firebaseConfig.projectId
+);
+
+if (hasValidConfig) {
+  try {
+    appInstance =
+      getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]!;
+    authInstance = getAuth(appInstance);
+    dbInstance = getFirestore(appInstance);
+  } catch (err: unknown) {
+    console.warn(
+      "⚠️ [Firebase] Inizializzazione non riuscita, modalità offline locale attiva:",
+      err
+    );
+    appInstance = null;
+    authInstance = null;
+    dbInstance = null;
+  }
+} else {
+  // Modalità Offline / Local-First nativa
+  appInstance = null;
+  authInstance = null;
+  dbInstance = null;
+}
+
+export const firebaseApp: FirebaseApp | null = appInstance;
+export const auth: Auth | null = authInstance;
+export const db: Firestore | null = dbInstance;
+
+/**
+ * Verifica se Firebase è correttamente inizializzato e pronto all'uso
+ */
+export function isFirebaseConfigured(): boolean {
+  return Boolean(appInstance && authInstance && dbInstance);
+} /*end isFirebaseConfigured*/
