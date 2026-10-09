@@ -96,37 +96,39 @@ function confirmBlankReset(): void {
 </script>
 
 <template>
-  <q-layout view="hHh Lpr lff" class="bg-dark text-white">
-    <!-- TOP HEADER (DESKTOP & TABLET) -->
+  <q-layout view="lHh Lpr lFf" class="bg-dark text-white">
+    <!-- TOP HEADER (FISSO E ADATTIVO PER QUALSIASI DISPLAY) -->
     <q-header elevated class="martial-top-header text-white no-print">
-      <q-toolbar class="q-py-sm">
+      <q-toolbar class="q-py-xs" style="min-height: 52px">
         <q-btn
           flat
           dense
           round
           icon="menu"
           aria-label="Menu"
-          class="q-mr-sm"
+          class="q-mr-xs"
           @click="leftDrawerOpen = !leftDrawerOpen"
         />
 
         <div
-          class="row items-center q-gutter-x-sm cursor-pointer"
+          class="row items-center q-gutter-x-xs cursor-pointer no-wrap"
           @click="$router.push('/')"
         >
           <q-avatar
-            size="36px"
+            :size="$q.screen.lt.sm ? '28px' : '36px'"
             color="primary"
             text-color="white"
             icon="hourglass_top"
           />
           <div>
             <div
-              class="text-weight-bold text-subtitle1 leading-tight tracking-wide"
+              class="text-weight-bold leading-tight tracking-wide"
+              :class="$q.screen.lt.sm ? 'text-subtitle2' : 'text-subtitle1'"
             >
-              12-WEEK YEAR OPERATIONAL HUB
+              <span class="gt-xs">12-WEEK YEAR OPERATIONAL HUB</span>
+              <span class="lt-sm">12WY HUB</span>
             </div>
-            <div class="text-caption text-grey-4">
+            <div class="text-caption text-grey-4 gt-xs">
               TimesManagement • Discipline & Focus Marziale
             </div>
           </div>
@@ -156,15 +158,18 @@ function confirmBlankReset(): void {
           </q-chip>
         </div>
 
-        <!-- WEEKLY EXECUTION SCORE PILL -->
-        <div class="row items-center q-mr-sm">
+        <!-- WEEKLY EXECUTION SCORE PILL (COMPATTO SU MOBILE) -->
+        <div class="row items-center q-mr-xs">
           <q-badge
-            :class="
+            :class="[
               store.selectedWeekScore.isTargetMet
                 ? 'score-badge-high'
-                : 'score-badge-low'
-            "
-            class="q-px-md q-py-sm text-subtitle2 text-weight-bolder cursor-pointer"
+                : 'score-badge-low',
+              $q.screen.lt.sm
+                ? 'q-px-sm q-py-xs text-caption text-weight-bold'
+                : 'q-px-md q-py-sm text-subtitle2 text-weight-bolder'
+            ]"
+            class="cursor-pointer no-wrap"
             rounded
             @click="$router.push('/')"
           >
@@ -172,11 +177,14 @@ function confirmBlankReset(): void {
               :name="
                 store.selectedWeekScore.isTargetMet ? 'check_circle' : 'warning'
               "
+              :size="$q.screen.lt.sm ? '14px' : '18px'"
               class="q-mr-xs"
             />
-            W{{ store.selectedWeek }} Score:
-            {{ store.selectedWeekScore.score }}%
-            <span class="text-caption text-weight-regular q-ml-xs">
+            <span
+              >W{{ store.selectedWeek }}:
+              {{ store.selectedWeekScore.score }}%</span
+            >
+            <span class="text-caption text-weight-regular q-ml-xs gt-xs">
               ({{
                 store.selectedWeekScore.isTargetMet
                   ? "≥ 85% Target"
@@ -186,8 +194,8 @@ function confirmBlankReset(): void {
           </q-badge>
         </div>
 
-        <!-- ACTION TOOLBAR BUTTONS -->
-        <div class="row items-center q-gutter-xs">
+        <!-- ACTION TOOLBAR BUTTONS (VISIBILI SU TABLET E DESKTOP, NEL DRAWER SU MOBILE) -->
+        <div class="gt-xs row items-center q-gutter-xs">
           <q-btn
             flat
             round
