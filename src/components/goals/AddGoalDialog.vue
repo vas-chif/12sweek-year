@@ -24,6 +24,9 @@ import {
   LIFE_GOAL_CATEGORY_DETAILS
 } from "@/types/twelveWeek";
 
+// ── 5. Componenti Figli ────────────────────────────────────────────────────────
+import AppDatePicker from "@/components/common/AppDatePicker.vue";
+
 interface CategoryOption {
   label: string;
   value: string;
@@ -293,22 +296,13 @@ watch(
           :rules="[val => !!val || 'Titolo obbligatorio']"
         />
 
-        <!-- DATA SCADENZA -->
-        <q-input
+        <!-- DATA SCADENZA (COMPONENTE COMUNE) -->
+        <AppDatePicker
           v-model="form.deadline"
           label="Data Scadenza / Deadline (opzionale)"
-          placeholder="YYYY-MM-DD"
-          outlined
-          dense
-          dark
           class="bg-slate-800"
-        >
-          <template #append>
-            <q-icon name="event" class="cursor-pointer text-grey-4" />
-          </template>
-        </q-input>
+        />
 
-        <!-- ORE PREVISTE -->
         <!-- ORE PREVISTE -->
         <div class="row q-col-gutter-sm">
           <div class="col-6">
