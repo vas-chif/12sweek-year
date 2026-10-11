@@ -52,6 +52,13 @@ let lastAuthError: string | null = null;
 export async function ensureAuthUser(): Promise<User> {
   if (currentUser) return currentUser;
 
+  // Se l'utente è già autenticato su Firebase (es. login email/password)
+  if (auth?.currentUser) {
+    currentUser = auth.currentUser;
+    lastAuthError = null;
+    return currentUser;
+  }
+
   // Fallback istantaneo se Firebase non è configurato
   if (!isFirebaseConfigured() || !auth) {
     const fallbackUid =
@@ -86,9 +93,9 @@ export async function ensureAuthUser(): Promise<User> {
               errStr.includes("CONFIGURATION_NOT_FOUND")
             ) {
               lastAuthError =
-                "Autenticazione Cloud: abilita il provider 'Anonimo' nella console Firebase (Authentication > Sign-in method). Dati protetti in locale.";
+                "Effettua l'accesso con la tua Email e Password per sincronizzare con il Cloud Firestore. Dati protetti in locale.";
             } else {
-              lastAuthError = `Autenticazione Cloud non riuscita: ${errStr}`;
+              lastAuthError = `Autenticazione Cloud: ${errStr}`;
             }
             console.warn(
               "Accesso anonimo Firebase non riuscito, uso fallback:",

@@ -12,16 +12,20 @@
 
 // ── 1. Vue & Framework ──────────────────────────────────────────────────────────
 import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 
 // ── 2. Stores Pinia ────────────────────────────────────────────────────────────
 import { useTwelveWeekStore } from "@/stores/twelveWeekStore";
+import { useAuthStore } from "@/stores/authStore";
 
 // ── 3. Tipi & Schemi Zod ───────────────────────────────────────────────────────
 import { SHIFT_DETAILS } from "@/types/twelveWeek";
 
+const router = useRouter();
 const $q = useQuasar();
 const store = useTwelveWeekStore();
+const authStore = useAuthStore();
 
 const leftDrawerOpen = ref(false);
 const fileInputRef = ref<HTMLInputElement | null>(null);
@@ -93,6 +97,28 @@ function confirmBlankReset(): void {
     store.resetToBlank();
   });
 } /*end confirmBlankReset*/
+
+function handleQuickLock(): void {
+  authStore.lockScreen();
+  router.push("/auth");
+  $q.notify({
+    type: "info",
+    message: "Postazione bloccata. Dati protetti!",
+    position: "top",
+    timeout: 1200
+  });
+} /*end handleQuickLock*/
+
+async function handleLogout(): Promise<void> {
+  await authStore.logout();
+  router.push("/auth");
+  $q.notify({
+    type: "info",
+    message: "Disconnesso con successo.",
+    position: "top",
+    timeout: 1200
+  });
+} /*end handleLogout*/
 </script>
 
 <template>
@@ -193,6 +219,19 @@ function confirmBlankReset(): void {
             </span>
           </q-badge>
         </div>
+
+        <!-- PULSANTE BLOCCA POSTAZIONE RAPIDO (VISIBILE SU QUALSIASI DISPLAY) -->
+        <q-btn
+          flat
+          round
+          dense
+          icon="lock"
+          color="amber-4"
+          class="q-mx-xs"
+          @click="handleQuickLock"
+        >
+          <q-tooltip>🔒 Blocca Postazione al Lavoro</q-tooltip>
+        </q-btn>
 
         <!-- ACTION TOOLBAR BUTTONS (VISIBILI SU TABLET E DESKTOP, NEL DRAWER SU MOBILE) -->
         <div class="gt-xs row items-center q-gutter-xs">
@@ -483,6 +522,59 @@ function confirmBlankReset(): void {
               no-caps
               @click="store.createCloudBackup"
             />
+          </q-card>
+        </div>
+        <q-separator class="q-my-md bg-slate-800" />
+
+        <!-- SEZIONE SICUREZZA POSTAZIONE CLINICA / LAVORO -->
+        <div class="q-px-sm q-mb-md">
+          <q-card
+            flat
+            class="bg-slate-800 border border-slate-700 q-pa-sm rounded-borders"
+          >
+            <div class="row items-center justify-between q-mb-xs">
+              <div
+                class="text-caption text-weight-bold text-amber-4 row items-center"
+              >
+                <q-icon name="shield" class="q-mr-xs" size="18px" />
+                POSTAZIONE PROTETTA
+              </div>
+              <q-badge
+                :color="authStore.hasPin ? 'positive' : 'warning'"
+                :label="authStore.hasPin ? 'PIN Attivo' : 'Senza PIN'"
+                size="xs"
+              />
+            </div>
+
+            <div class="text-caption text-grey-3 ellipsis q-mb-xs">
+              {{ authStore.userEmail || "Account Personale" }}
+            </div>
+
+            <div class="row q-gutter-x-xs q-mt-xs">
+              <q-btn
+                unelevated
+                dense
+                size="sm"
+                color="amber-9"
+                text-color="white"
+                icon="lock"
+                label="Blocca Ora"
+                class="col text-weight-bold"
+                no-caps
+                @click="handleQuickLock"
+              />
+              <q-btn
+                outline
+                dense
+                size="sm"
+                color="negative"
+                icon="logout"
+                label="Esci"
+                class="col text-weight-bold"
+                no-caps
+                @click="handleLogout"
+              />
+            </div>
           </q-card>
         </div>
 

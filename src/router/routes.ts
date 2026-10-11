@@ -28,6 +28,11 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: "/auth",
+    name: "auth",
+    component: () => import("../pages/AuthView.vue")
+  },
+  {
     path: "/:catchAll(.*)*",
     component: () => import("../pages/ErrorNotFound.vue")
   }
