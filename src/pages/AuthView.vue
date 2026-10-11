@@ -304,12 +304,14 @@ async function handleLogout(): Promise<void> {
           >
           <q-input
             v-model="setupPin"
+            dark
             dense
             outlined
+            no-error-icon
             type="password"
             maxlength="8"
             placeholder="Es. 1234"
-            class="q-mb-xs"
+            class="auth-input q-mb-xs"
           />
           <div class="row q-gutter-x-xs">
             <q-btn
@@ -350,43 +352,57 @@ async function handleLogout(): Promise<void> {
         <q-form @submit.prevent="handleAuth" class="q-gutter-y-md">
           <q-input
             v-model="email"
+            dark
             outlined
             dense
+            no-error-icon
+            class="auth-input"
             label="Email Personale"
             type="email"
             autocomplete="email"
             color="primary"
-            bg-color="slate-900"
             :rules="[val => !!val || 'Email obbligatoria']"
           >
             <template #prepend>
-              <q-icon name="email" color="grey-5" />
+              <q-icon name="email" color="grey-4" size="20px" />
+            </template>
+            <template #append>
+              <q-icon
+                v-if="email"
+                name="cancel"
+                size="20px"
+                class="cursor-pointer text-grey-5"
+                @click="email = ''"
+              />
             </template>
           </q-input>
 
           <q-input
             v-model="password"
+            dark
             outlined
             dense
+            no-error-icon
+            class="auth-input"
             label="Password"
             :type="showPassword ? 'text' : 'password'"
             :autocomplete="
               tab === 'login' ? 'current-password' : 'new-password'
             "
             color="primary"
-            bg-color="slate-900"
             :rules="[
               val => !!val || 'Password obbligatoria',
               val => val.length >= 6 || 'Minimo 6 caratteri'
             ]"
           >
             <template #prepend>
-              <q-icon name="lock" color="grey-5" />
+              <q-icon name="lock" color="grey-4" size="20px" />
             </template>
             <template #append>
               <q-icon
                 :name="showPassword ? 'visibility_off' : 'visibility'"
-                class="cursor-pointer"
+                size="20px"
+                class="cursor-pointer text-grey-4"
                 @click="showPassword = !showPassword"
               />
             </template>
@@ -395,25 +411,28 @@ async function handleLogout(): Promise<void> {
           <q-input
             v-if="tab === 'register'"
             v-model="confirmPassword"
+            dark
             outlined
             dense
+            no-error-icon
+            class="auth-input"
             label="Conferma Password"
             :type="showConfirmPassword ? 'text' : 'password'"
             autocomplete="new-password"
             color="primary"
-            bg-color="slate-900"
             :rules="[
               val => !!val || 'Conferma password obbligatoria',
               val => val === password || 'Le password non coincidono'
             ]"
           >
             <template #prepend>
-              <q-icon name="lock_clock" color="grey-5" />
+              <q-icon name="lock" color="grey-4" size="20px" />
             </template>
             <template #append>
               <q-icon
                 :name="showConfirmPassword ? 'visibility_off' : 'visibility'"
-                class="cursor-pointer"
+                size="20px"
+                class="cursor-pointer text-grey-4"
                 @click="showConfirmPassword = !showConfirmPassword"
               />
             </template>
@@ -499,6 +518,56 @@ async function handleLogout(): Promise<void> {
       background: rgba(56, 189, 248, 0.2);
       border-color: #38bdf8;
     }
+  }
+}
+
+:deep(.auth-input) {
+  .q-field__control {
+    background-color: #0b1329 !important;
+    border-radius: 8px;
+    height: 48px;
+    min-height: 48px;
+    align-items: center;
+    border: 1px solid #334155;
+    transition: all 0.2s ease;
+
+    &:before {
+      border: none !important;
+    }
+
+    &:hover {
+      border-color: #475569;
+    }
+  }
+
+  &.q-field--focused .q-field__control {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 1px #38bdf8;
+  }
+
+  &.q-field--error .q-field__control {
+    border-color: #ef4444 !important;
+  }
+
+  .q-field__native,
+  .q-field__input {
+    color: #f8fafc !important;
+  }
+
+  .q-field__label {
+    color: #94a3b8 !important;
+  }
+
+  /* Neutralizza lo sfondo chiaro/azzurro forzato da Chrome/Brave Autofill */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #0b1329 inset !important;
+    -webkit-text-fill-color: #f8fafc !important;
+    caret-color: #f8fafc !important;
+    border-radius: 0;
+    transition: background-color 5000s ease-in-out 0s;
   }
 }
 </style>
