@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Sfondo Dark Slate profondo -->
+    <linearGradient id="modernBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#070b14" />
+    </linearGradient>
+
+    <!-- Gradiente Sky Blue chirurgico -->
+    <linearGradient id="bladeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+
+    <!-- Gradiente Oro Puro -->
+    <linearGradient id="goldPure" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+
+  <!-- Base App Icon con raggio moderno curvato (Squircle stile Apple/macOS) -->
+  <rect width="512" height="512" rx="120" fill="url(#modernBg)" />
+  <rect width="504" height="504" x="4" y="4" rx="116" fill="none" stroke="#1e293b" stroke-width="2" />
+
+  <!-- 1. Traccia circolare di fondo (Il quadrante delle 12 settimane) -->
+  <circle cx="256" cy="270" r="140" fill="none" stroke="#1e293b" stroke-width="14" stroke-linecap="round" />
+
+  <!-- 2. Arco di Esecuzione Attivo (The 12-Week Loop - Target 85%) -->
+  <!-- L'arco copre i 3/4 del cerchio, lasciando il varco superiore aperto per il fendente -->
+  <path d="M 157 171 A 140 140 0 1 0 355 171" 
+        fill="none" 
+        stroke="url(#bladeGrad)" 
+        stroke-width="14" 
+        stroke-linecap="round" />
+
+  <!-- 3. La Lama Minimalista (Taglio Centrale / Focus A1 / Katana stilizzata) -->
+  <g transform="translate(0, 0)">
+    <!-- Corpo affilato centrale -->
+    <path d="M 256 100 L 272 230 L 256 295 L 240 230 Z" 
+          fill="url(#bladeGrad)" />
+    
+    <!-- Bagliore / filo interno in contrasto puro -->
+    <line x1="256" y1="110" x2="256" y2="285" 
+          stroke="#f8fafc" stroke-width="3" stroke-linecap="round" opacity="0.85" />
+  </g>
+
+  <!-- 4. Zenith Aureo (Il Centro del Risultato / Punto focale del 12WY) -->
+  <circle cx="256" cy="335" r="11" fill="url(#goldPure)" />
+  <circle cx="256" cy="335" r="18" fill="none" stroke="#f59e0b" stroke-width="2" opacity="0.4" />
+
+  <!-- 5. Tacca orizzontale di equilibrio (Tecnica Ma / Vuoto di decompressione) -->
+  <line x1="226" y1="425" x2="286" y2="425" stroke="#64748b" stroke-width="4" stroke-linecap="round" opacity="0.6" />
+</svg>
