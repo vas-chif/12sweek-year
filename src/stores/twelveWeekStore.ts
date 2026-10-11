@@ -358,10 +358,15 @@ export const useTwelveWeekStore = defineStore("twelveWeek", () => {
   } /*end addCustomGoalCategory*/
 
   function addLifeGoal(goal: Omit<LifeGoal, "id" | "completed">): void {
+    const phases = goal.phases || [];
+    const activePhaseId = goal.activePhaseId || (phases[0]?.id ?? "");
+
     const newGoal: LifeGoal = {
       ...goal,
       id: `goal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      completed: false
+      completed: false,
+      phases,
+      activePhaseId
     };
 
     // Auto-apprende e memorizza la nuova categoria se custom
@@ -381,6 +386,14 @@ export const useTwelveWeekStore = defineStore("twelveWeek", () => {
       timeout: 1500
     });
   } /*end addLifeGoal*/
+
+  function setGoalActivePhase(goalId: string, phaseId: string): void {
+    const goal = plan.value.goals.find(g => g.id === goalId);
+    if (goal) {
+      goal.activePhaseId = phaseId;
+      saveToLocalStorage();
+    }
+  } /*end setGoalActivePhase*/
 
   function updateLifeGoal(id: string, patch: Partial<LifeGoal>): void {
     const goal = plan.value.goals.find(g => g.id === id);
@@ -834,6 +847,7 @@ export const useTwelveWeekStore = defineStore("twelveWeek", () => {
     addLifeGoal,
     updateLifeGoal,
     deleteLifeGoal,
+    setGoalActivePhase,
     clearAllGoals,
     customGoalCategories,
     addCustomGoalCategory,

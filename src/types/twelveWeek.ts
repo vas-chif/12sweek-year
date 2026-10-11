@@ -302,11 +302,7 @@ export const LIFE_GOAL_CATEGORY_DETAILS: Record<
     icon: "fitness_center",
     color: "emerald-5"
   },
-  family: {
-    label: "Famiglia & Relazioni",
-    icon: "favorite",
-    color: "rose-5"
-  },
+  family: { label: "Famiglia & Relazioni", icon: "favorite", color: "rose-5" },
   finance: {
     label: "Finanze & Risparmio",
     icon: "account_balance_wallet",
@@ -333,6 +329,16 @@ export function getGoalCategoryMeta(category: string): {
   };
 } /*end getGoalCategoryMeta*/
 
+export const GoalPhaseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  target: z.string().default(""),
+  subtitle: z.string().default(""),
+  description: z.string().default(""),
+  rules: z.array(z.string()).default([])
+});
+export type GoalPhase = z.infer<typeof GoalPhaseSchema>;
+
 export const LifeGoalSchema = z.object({
   id: z.string(),
   category: LifeGoalCategorySchema,
@@ -341,7 +347,9 @@ export const LifeGoalSchema = z.object({
   targetDailyHours: z.number().default(0),
   totalTargetHours: z.number().default(0),
   notes: z.string().default(""),
-  completed: z.boolean().default(false)
+  completed: z.boolean().default(false),
+  activePhaseId: z.string().default(""),
+  phases: z.array(GoalPhaseSchema).default([])
 });
 export type LifeGoal = z.infer<typeof LifeGoalSchema>;
 
