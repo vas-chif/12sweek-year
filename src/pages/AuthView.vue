@@ -27,6 +27,8 @@ const tab = ref<"login" | "register">("login");
 const email = ref("");
 const password = ref("");
 const showPassword = ref(false);
+const confirmPassword = ref("");
+const showConfirmPassword = ref(false);
 const enteredPin = ref("");
 const setupPin = ref("");
 const isSettingNewPin = ref(false);
@@ -39,6 +41,17 @@ async function handleAuth(): Promise<void> {
       position: "top"
     });
     return;
+  }
+
+  if (tab.value === "register") {
+    if (password.value !== confirmPassword.value) {
+      $q.notify({
+        type: "warning",
+        message: "Le password non coincidono",
+        position: "top"
+      });
+      return;
+    }
   }
 
   let success = false;
@@ -341,6 +354,7 @@ async function handleLogout(): Promise<void> {
             dense
             label="Email Personale"
             type="email"
+            autocomplete="email"
             color="primary"
             bg-color="slate-900"
             :rules="[val => !!val || 'Email obbligatoria']"
@@ -356,6 +370,9 @@ async function handleLogout(): Promise<void> {
             dense
             label="Password"
             :type="showPassword ? 'text' : 'password'"
+            :autocomplete="
+              tab === 'login' ? 'current-password' : 'new-password'
+            "
             color="primary"
             bg-color="slate-900"
             :rules="[
@@ -371,6 +388,33 @@ async function handleLogout(): Promise<void> {
                 :name="showPassword ? 'visibility_off' : 'visibility'"
                 class="cursor-pointer"
                 @click="showPassword = !showPassword"
+              />
+            </template>
+          </q-input>
+
+          <q-input
+            v-if="tab === 'register'"
+            v-model="confirmPassword"
+            outlined
+            dense
+            label="Conferma Password"
+            :type="showConfirmPassword ? 'text' : 'password'"
+            autocomplete="new-password"
+            color="primary"
+            bg-color="slate-900"
+            :rules="[
+              val => !!val || 'Conferma password obbligatoria',
+              val => val === password || 'Le password non coincidono'
+            ]"
+          >
+            <template #prepend>
+              <q-icon name="lock_clock" color="grey-5" />
+            </template>
+            <template #append>
+              <q-icon
+                :name="showConfirmPassword ? 'visibility_off' : 'visibility'"
+                class="cursor-pointer"
+                @click="showConfirmPassword = !showConfirmPassword"
               />
             </template>
           </q-input>

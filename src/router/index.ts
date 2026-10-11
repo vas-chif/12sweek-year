@@ -22,7 +22,7 @@ export default defineRouter((/* { store, ssrContext } */) => {
     history: createHistory(import.meta.env.QUASAR_VUE_ROUTER_BASE)
   });
 
-  Router.beforeEach(async (to, _from, next) => {
+  Router.beforeEach(async to => {
     const authStore = useAuthStore();
 
     if (!authStore.isAuthReady) {
@@ -34,16 +34,14 @@ export default defineRouter((/* { store, ssrContext } */) => {
     // Se l'utente non è autenticato oppure la postazione è bloccata
     if (!authStore.isAuthenticated || authStore.isLocked) {
       if (!isAuthRoute) {
-        next({ path: "/auth" });
-        return;
+        return { path: "/auth" };
       }
     } else if (isAuthRoute) {
       // Se già loggato e sbloccato, reindirizza alla dashboard
-      next({ path: "/" });
-      return;
+      return { path: "/" };
     }
 
-    next();
+    return true;
   });
 
   return Router;
