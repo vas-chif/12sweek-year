@@ -443,7 +443,10 @@ export const useTwelveWeekStore = defineStore("twelveWeek", () => {
   function importShiftsJSON(jsonString: string): {
     success: boolean;
     count: number;
-    error?: string;
+    firstDate?: string | undefined;
+    month?: number | undefined;
+    year?: number | undefined;
+    error?: string | undefined;
   } {
     try {
       const parsed = JSON.parse(jsonString);
@@ -464,6 +467,15 @@ export const useTwelveWeekStore = defineStore("twelveWeek", () => {
       }
 
       const items: ShiftImportItem[] = validation.data;
+      if (items.length === 0) {
+        Notify.create({
+          type: "warning",
+          message: "Il file JSON non contiene alcun turno.",
+          position: "top-right"
+        });
+        return { success: false, count: 0, error: "Array vuoto" };
+      }
+
       let count = 0;
       for (const item of items) {
         const existing = plan.value.dailyHabits[item.date];
@@ -491,13 +503,26 @@ export const useTwelveWeekStore = defineStore("twelveWeek", () => {
       }
 
       saveToLocalStorage();
+
+      // Determina il mese e l'anno del primo turno per sincronizzare la vista del calendario
+      const firstDate = items[0]?.date ?? "";
+      let month: number | undefined;
+      let year: number | undefined;
+      if (firstDate) {
+        const parts = firstDate.split("-");
+        if (parts.length >= 2) {
+          year = parseInt(parts[0] ?? "2026", 10);
+          month = parseInt(parts[1] ?? "10", 10);
+        }
+      }
+
       Notify.create({
         type: "positive",
         message: `${count} turni ospedalieri importati con successo!`,
         position: "top-right",
         timeout: 2500
       });
-      return { success: true, count };
+      return { success: true, count, firstDate, month, year };
     } catch (err) {
       console.error("Errore parsing JSON turni:", err);
       Notify.create({

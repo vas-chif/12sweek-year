@@ -25,6 +25,9 @@ import {
   type TwelveWeekInfo
 } from "@/types/twelveWeek";
 
+// ── 5. Componenti Figli ────────────────────────────────────────────────────────
+import ShiftImportDialog from "@/components/calendar/ShiftImportDialog.vue";
+
 const store = useTwelveWeekStore();
 const router = useRouter();
 const $q = useQuasar();
@@ -208,34 +211,17 @@ function saveDayDetail(): void {
 
 // ── 8. Dialog Importazione JSON Turni ──────────────────────────────────────────
 const showShiftImportDialog = ref<boolean>(false);
-const shiftJsonText = ref<string>("");
 
-function handleJsonImport(): void {
-  if (!shiftJsonText.value.trim()) {
-    $q.notify({
-      type: "warning",
-      message: "Incolla il JSON dei turni prima di confermare",
-      position: "top-right"
-    });
-    return;
+function onShiftsImported(payload: {
+  count: number;
+  month?: number | undefined;
+  year?: number | undefined;
+}): void {
+  if (payload.month && payload.year) {
+    viewingMonth.value = payload.month;
+    viewingYear.value = payload.year;
   }
-  const result = store.importShiftsJSON(shiftJsonText.value);
-  if (result.success) {
-    showShiftImportDialog.value = false;
-    shiftJsonText.value = "";
-  }
-} /*end handleJsonImport*/
-
-function pasteSampleJson(): void {
-  const sample = [
-    { date: "2026-10-12", shift: "M", note: "Reparto Ospedale" },
-    { date: "2026-10-13", shift: "P" },
-    { date: "2026-10-14", shift: "N" },
-    { date: "2026-10-15", shift: "S", note: "Recupero biologico" },
-    { date: "2026-10-16", shift: "R" }
-  ];
-  shiftJsonText.value = JSON.stringify(sample, null, 2);
-} /*end pasteSampleJson*/
+} /*end onShiftsImported*/
 </script>
 
 <template>
@@ -307,6 +293,9 @@ function pasteSampleJson(): void {
         >
         <q-chip size="xs" color="emerald-7" text-color="white" icon="hotel"
           >R: Riposo</q-chip
+        >
+        <q-chip size="xs" color="teal-8" text-color="white" icon="event_busy"
+          >A: Ferie/Assenza</q-chip
         >
       </div>
     </div>
@@ -506,7 +495,7 @@ function pasteSampleJson(): void {
             >
             <div class="row q-gutter-xs">
               <q-btn
-                v-for="s in ['M', 'P', 'N', 'S', 'R'] as HospitalShift[]"
+                v-for="s in ['M', 'P', 'N', 'S', 'R', 'A'] as HospitalShift[]"
                 :key="s"
                 unelevated
                 :color="
@@ -556,60 +545,11 @@ function pasteSampleJson(): void {
       </q-card>
     </q-dialog>
 
-    <!-- DIALOG IMPORTAZIONE TURNI JSON -->
-    <q-dialog v-model="showShiftImportDialog">
-      <q-card
-        class="bg-slate-900 text-white border border-slate-700"
-        style="min-width: 480px"
-      >
-        <q-card-section
-          class="row items-center justify-between border-b border-slate-800"
-        >
-          <div class="text-subtitle1 text-weight-bold row items-center">
-            <q-icon name="upload_file" color="info" class="q-mr-sm" />
-            Importa Turni Ospedalieri (JSON)
-          </div>
-          <q-btn flat round dense icon="close" v-close-popup />
-        </q-card-section>
-
-        <q-card-section class="q-gutter-y-sm q-pt-md">
-          <div class="text-caption text-grey-4">
-            Incolla un array JSON di turni per mappare in un click l'intero
-            trimestre:
-          </div>
-          <q-input
-            v-model="shiftJsonText"
-            type="textarea"
-            outlined
-            dark
-            rows="8"
-            placeholder='[ {"date": "2026-10-12", "shift": "M", "note": "Reparto Medicina"} ]'
-            class="bg-slate-950 font-mono text-caption"
-          />
-          <div class="row justify-end">
-            <q-btn
-              flat
-              size="sm"
-              color="accent"
-              label="Incolla Esempio"
-              no-caps
-              @click="pasteSampleJson"
-            />
-          </div>
-        </q-card-section>
-
-        <q-card-actions align="right" class="q-pa-md border-t border-slate-800">
-          <q-btn flat label="Annulla" color="grey-4" v-close-popup />
-          <q-btn
-            unelevated
-            color="primary"
-            label="Importa Turni nel Calendario"
-            icon="check"
-            @click="handleJsonImport"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <!-- DIALOG MODULARE IMPORTAZIONE TURNI JSON / FILE -->
+    <ShiftImportDialog
+      v-model="showShiftImportDialog"
+      @imported="onShiftsImported"
+    />
   </q-page>
 </template>
 

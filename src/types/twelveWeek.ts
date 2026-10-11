@@ -11,8 +11,8 @@
 import { z } from "zod";
 
 // ── 1. Turni Ospedalieri Sanitari ──────────────────────────────────────────────
-export type HospitalShift = "M" | "P" | "N" | "S" | "R";
-export const HospitalShiftSchema = z.enum(["M", "P", "N", "S", "R"]);
+export type HospitalShift = "M" | "P" | "N" | "S" | "R" | "A";
+export const HospitalShiftSchema = z.enum(["M", "P", "N", "S", "R", "A"]);
 
 export const SHIFT_DETAILS: Record<
   HospitalShift,
@@ -69,8 +69,53 @@ export const SHIFT_DETAILS: Record<
     icon: "hotel",
     description:
       "Giornata libera: focus per Clan Famiglia, business e workout intensi."
+  },
+  A: {
+    label: "Assenza / Ferie",
+    time: "Libero",
+    color: "teal-8",
+    textColor: "white",
+    icon: "event_busy",
+    description:
+      "Assenza programmata, ferie o aggiornamento. Massima flessibilità per famiglia e progetti."
   }
 };
+
+/**
+ * Normalizza qualsiasi formato data (DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD) nel formato ISO YYYY-MM-DD
+ */
+export function normalizeDateToIso(dateStr: string): string {
+  const trimmed = dateStr.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+  const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (slashMatch) {
+    const day = (slashMatch[1] ?? "1").padStart(2, "0");
+    const month = (slashMatch[2] ?? "1").padStart(2, "0");
+    const year = slashMatch[3] ?? "2026";
+    return `${year}-${month}-${day}`;
+  }
+  const dashMatch = trimmed.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (dashMatch) {
+    const day = (dashMatch[1] ?? "1").padStart(2, "0");
+    const month = (dashMatch[2] ?? "1").padStart(2, "0");
+    const year = dashMatch[3] ?? "2026";
+    return `${year}-${month}-${day}`;
+  }
+  return trimmed;
+} /*end normalizeDateToIso*/
+
+/**
+ * Normalizza la sigla del turno convertendo in maiuscolo e garantendo un valore valido
+ */
+export function normalizeShiftCode(shiftStr: string): HospitalShift {
+  const upper = shiftStr.trim().toUpperCase();
+  if (["M", "P", "N", "S", "R", "A"].includes(upper)) {
+    return upper as HospitalShift;
+  }
+  return "R";
+} /*end normalizeShiftCode*/
 
 // ── 2. Priorità Metodo Brian Tracy ABCDE ───────────────────────────────────────
 export type Priority = "A1" | "A2" | "B1" | "B2" | "C1" | "D" | "E";
@@ -390,9 +435,9 @@ export type DailyHabit = z.infer<typeof DailyHabitSchema>;
 
 // Import Turni Ospedalieri
 export const ShiftImportItemSchema = z.object({
-  date: z.string(),
-  shift: HospitalShiftSchema,
-  note: z.string().optional()
+  date: z.string().transform(d => normalizeDateToIso(d)),
+  shift: z.string().transform(s => normalizeShiftCode(s)),
+  note: z.string().optional().default("")
 });
 export type ShiftImportItem = z.infer<typeof ShiftImportItemSchema>;
 

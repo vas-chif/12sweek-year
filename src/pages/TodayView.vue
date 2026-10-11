@@ -358,7 +358,7 @@ function resetMaTimer(): void {
           </div>
           <div class="row q-gutter-xs q-mb-sm">
             <q-btn
-              v-for="s in ['M', 'P', 'N', 'S', 'R'] as HospitalShift[]"
+              v-for="s in ['M', 'P', 'N', 'S', 'R', 'A'] as HospitalShift[]"
               :key="s"
               unelevated
               :color="
