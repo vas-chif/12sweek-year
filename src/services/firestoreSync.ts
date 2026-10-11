@@ -44,6 +44,7 @@ export interface SyncResult {
 // ── 3. Gestione Utente Firebase ──────────────────────────────────────────────────
 let currentUser: User | null = null;
 let authPromise: Promise<User> | null = null;
+let lastAuthError: string | null = null;
 
 /**
  * Garantisce che un utente Firebase sia autenticato (anonimo o persistente)
@@ -70,13 +71,25 @@ export async function ensureAuthUser(): Promise<User> {
         unsubscribe();
         if (user) {
           currentUser = user;
+          lastAuthError = null;
           resolve(user);
         } else {
           try {
             const userCred = await signInAnonymously(authTarget);
             currentUser = userCred.user;
+            lastAuthError = null;
             resolve(currentUser);
           } catch (err: unknown) {
+            const errStr = err instanceof Error ? err.message : String(err);
+            if (
+              errStr.includes("configuration-not-found") ||
+              errStr.includes("CONFIGURATION_NOT_FOUND")
+            ) {
+              lastAuthError =
+                "Autenticazione Cloud: abilita il provider 'Anonimo' nella console Firebase (Authentication > Sign-in method). Dati protetti in locale.";
+            } else {
+              lastAuthError = `Autenticazione Cloud non riuscita: ${errStr}`;
+            }
             console.warn(
               "Accesso anonimo Firebase non riuscito, uso fallback:",
               err
@@ -115,6 +128,15 @@ export async function savePlanToFirestore(
   const dbInstance = db;
   try {
     const user = await ensureAuthUser();
+
+    // Se l'utente non è autenticato su Firebase a causa del provider anonimo non abilitato
+    if (!auth?.currentUser && lastAuthError) {
+      return {
+        success: false,
+        message: lastAuthError
+      };
+    }
+
     const userId = user.uid;
     const nowIso = new Date().toISOString();
 
