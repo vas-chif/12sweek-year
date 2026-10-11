@@ -19,10 +19,12 @@ import {
   onAuthStateChanged,
   type User
 } from "firebase/auth";
-import { auth, isFirebaseConfigured } from "@/services/firebase";
+import { auth, db, isFirebaseConfigured } from "@/services/firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const STORAGE_KEY_PIN = "twelve_week_lock_pin";
 const STORAGE_KEY_LOCKED = "twelve_week_is_locked";
+const STORAGE_KEY_REGISTERED = "twelve_week_owner_registered";
 
 export const useAuthStore = defineStore("auth", () => {
   // ── Stato ──────────────────────────────────────────────────────────────────
@@ -32,6 +34,9 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.getItem(STORAGE_KEY_LOCKED) === "true"
   );
   const savedPin = ref<string>(localStorage.getItem(STORAGE_KEY_PIN) || "");
+  const isRegistrationAllowed = ref<boolean>(
+    localStorage.getItem(STORAGE_KEY_REGISTERED) !== "true"
+  );
   const authLoading = ref<boolean>(false);
   const authError = ref<string | null>(null);
 
@@ -40,9 +45,32 @@ export const useAuthStore = defineStore("auth", () => {
   const hasPin = computed<boolean>(() => savedPin.value.length >= 4);
   const userEmail = computed<string>(() => user.value?.email || "");
 
+  // ── Verifica Monoutente Proprietario ───────────────────────────────────────
+  async function checkRegistrationStatus(): Promise<void> {
+    if (localStorage.getItem(STORAGE_KEY_REGISTERED) === "true") {
+      isRegistrationAllowed.value = false;
+      return;
+    }
+
+    if (isFirebaseConfigured() && db) {
+      try {
+        const ownerDocRef = doc(db, "system", "owner");
+        const docSnap = await getDoc(ownerDocRef);
+        if (docSnap.exists()) {
+          isRegistrationAllowed.value = false;
+          localStorage.setItem(STORAGE_KEY_REGISTERED, "true");
+        }
+      } catch (err: unknown) {
+        console.warn("Verifica stato registrazione proprietario:", err);
+      }
+    }
+  } /*end checkRegistrationStatus*/
+
   // ── Inizializzazione Listener Firebase ─────────────────────────────────────
   function initAuth(): Promise<User | null> {
     return new Promise(resolve => {
+      void checkRegistrationStatus();
+
       if (!isFirebaseConfigured() || !auth) {
         isAuthReady.value = true;
         resolve(null);
@@ -52,8 +80,11 @@ export const useAuthStore = defineStore("auth", () => {
       onAuthStateChanged(auth, currentUser => {
         user.value = currentUser;
         isAuthReady.value = true;
-        // Se non autenticato, resettiamo anche lo stato di lock
-        if (!currentUser) {
+        // Se c'è già un utente autenticato, la registrazione è per definizione chiusa
+        if (currentUser) {
+          isRegistrationAllowed.value = false;
+          localStorage.setItem(STORAGE_KEY_REGISTERED, "true");
+        } else {
           isLocked.value = false;
           localStorage.removeItem(STORAGE_KEY_LOCKED);
         }
@@ -77,7 +108,9 @@ export const useAuthStore = defineStore("auth", () => {
       const cred = await signInWithEmailAndPassword(auth, email.trim(), pass);
       user.value = cred.user;
       isLocked.value = false;
+      isRegistrationAllowed.value = false;
       localStorage.setItem(STORAGE_KEY_LOCKED, "false");
+      localStorage.setItem(STORAGE_KEY_REGISTERED, "true");
       return true;
     } catch (err: unknown) {
       authError.value = formatAuthError(err);
@@ -88,6 +121,12 @@ export const useAuthStore = defineStore("auth", () => {
   } /*end login*/
 
   async function register(email: string, pass: string): Promise<boolean> {
+    if (!isRegistrationAllowed.value) {
+      authError.value =
+        "Registrazione disabilitata. L'applicazione è riservata all'unico proprietario.";
+      return false;
+    }
+
     if (!isFirebaseConfigured() || !auth) {
       authError.value = "Firebase non configurato in .env.";
       return false;
@@ -104,7 +143,24 @@ export const useAuthStore = defineStore("auth", () => {
       );
       user.value = cred.user;
       isLocked.value = false;
+      isRegistrationAllowed.value = false;
       localStorage.setItem(STORAGE_KEY_LOCKED, "false");
+      localStorage.setItem(STORAGE_KEY_REGISTERED, "true");
+
+      // Salva il documento di lock del proprietario su Firestore se accessibile
+      if (db) {
+        try {
+          const ownerDocRef = doc(db, "system", "owner");
+          await setDoc(ownerDocRef, {
+            ownerUid: cred.user.uid,
+            ownerEmail: email.trim(),
+            registeredAt: new Date().toISOString()
+          });
+        } catch (dbErr) {
+          console.warn("Registrazione proprietario su Firestore:", dbErr);
+        }
+      }
+
       return true;
     } catch (err: unknown) {
       authError.value = formatAuthError(err);
@@ -195,12 +251,14 @@ export const useAuthStore = defineStore("auth", () => {
     isAuthReady,
     isLocked,
     savedPin,
+    isRegistrationAllowed,
     authLoading,
     authError,
     isAuthenticated,
     hasPin,
     userEmail,
     initAuth,
+    checkRegistrationStatus,
     login,
     register,
     logout,

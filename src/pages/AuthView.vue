@@ -11,7 +11,7 @@
  */
 
 // ── 1. Vue & Framework ──────────────────────────────────────────────────────────
-import { ref } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 
@@ -32,6 +32,21 @@ const showConfirmPassword = ref(false);
 const enteredPin = ref("");
 const setupPin = ref("");
 const isSettingNewPin = ref(false);
+
+onMounted(() => {
+  if (!authStore.isRegistrationAllowed) {
+    tab.value = "login";
+  }
+});
+
+watch(
+  () => authStore.isRegistrationAllowed,
+  allowed => {
+    if (!allowed && tab.value === "register") {
+      tab.value = "login";
+    }
+  }
+);
 
 async function handleAuth(): Promise<void> {
   if (!email.value || !password.value) {
@@ -337,7 +352,9 @@ async function handleLogout(): Promise<void> {
 
       <!-- CASO 2: LOGIN / REGISTRAZIONE EMAIL & PASSWORD -->
       <div v-else class="login-register-section">
+        <!-- SELEZIONE ACCEDI / REGISTRATI (VISIBILE SOLO SE NON C'È ANCORA UN UTENTE REGISTRATO) -->
         <q-tabs
+          v-if="authStore.isRegistrationAllowed"
           v-model="tab"
           dense
           active-color="primary"
@@ -348,6 +365,19 @@ async function handleLogout(): Promise<void> {
           <q-tab name="login" label="Accedi" icon="login" />
           <q-tab name="register" label="Registrati" icon="person_add" />
         </q-tabs>
+
+        <!-- SE C'È GIÀ UN UTENTE REGISTRATO: ACCESSO ESCLUSIVO PROPRIETARIO -->
+        <div
+          v-else
+          class="row items-center justify-center q-py-sm q-mb-md bg-slate-900 border border-slate-800 rounded-borders text-primary text-subtitle2 text-weight-bold"
+        >
+          <q-icon
+            name="admin_panel_settings"
+            size="20px"
+            class="q-mr-xs text-primary"
+          />
+          ACCESSO CABINA DI REGIA • PROPRIETARIO
+        </div>
 
         <q-form @submit.prevent="handleAuth" class="q-gutter-y-md">
           <q-input
@@ -409,7 +439,7 @@ async function handleLogout(): Promise<void> {
           </q-input>
 
           <q-input
-            v-if="tab === 'register'"
+            v-if="tab === 'register' && authStore.isRegistrationAllowed"
             v-model="confirmPassword"
             dark
             outlined
