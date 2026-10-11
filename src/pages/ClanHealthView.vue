@@ -11,7 +11,7 @@
  */
 
 // ── 1. Vue & Framework ──────────────────────────────────────────────────────────
-import { ref, computed, reactive } from "vue";
+import { ref, computed } from "vue";
 import { useQuasar } from "quasar";
 
 // ── 2. Stores Pinia ────────────────────────────────────────────────────────────
@@ -21,9 +21,11 @@ import { useTwelveWeekStore } from "@/stores/twelveWeekStore";
 import {
   type TurtlePhase,
   TURTLE_PHASE_CONFIG,
-  type LifeGoalCategory,
-  LIFE_GOAL_CATEGORY_DETAILS
+  getGoalCategoryMeta
 } from "@/types/twelveWeek";
+
+// ── 5. Componenti Figli ────────────────────────────────────────────────────────
+import AddGoalDialog from "@/components/goals/AddGoalDialog.vue";
 
 const store = useTwelveWeekStore();
 const $q = useQuasar();
@@ -65,53 +67,6 @@ function saveMeasurement(): void {
 
 // ── 5. Macro Obiettivi del Trimestre (Life Goals) ─────────────────────────────
 const showAddGoalDialog = ref<boolean>(false);
-const newGoal = reactive<{
-  category: LifeGoalCategory;
-  title: string;
-  deadline: string;
-  targetDailyHours: number;
-  totalTargetHours: number;
-  notes: string;
-}>({
-  category: "business",
-  title: "",
-  deadline: "2026-11-26",
-  targetDailyHours: 2.0,
-  totalTargetHours: 40,
-  notes: ""
-});
-
-const goalCategoryOptions = Object.entries(LIFE_GOAL_CATEGORY_DETAILS).map(
-  ([key, val]) => ({
-    label: val.label,
-    value: key as LifeGoalCategory,
-    icon: val.icon
-  })
-);
-
-function handleAddGoal(): void {
-  if (!newGoal.title.trim()) {
-    $q.notify({
-      type: "warning",
-      message: "Inserisci un titolo per l'obiettivo",
-      position: "top-right"
-    });
-    return;
-  }
-
-  store.addLifeGoal({
-    category: newGoal.category,
-    title: newGoal.title.trim(),
-    deadline: newGoal.deadline.trim(),
-    targetDailyHours: Number(newGoal.targetDailyHours) || 0,
-    totalTargetHours: Number(newGoal.totalTargetHours) || 0,
-    notes: newGoal.notes.trim()
-  });
-
-  newGoal.title = "";
-  newGoal.notes = "";
-  showAddGoalDialog.value = false;
-} /*end handleAddGoal*/
 
 function handleDeleteGoal(id: string): void {
   $q.dialog({
@@ -124,9 +79,17 @@ function handleDeleteGoal(id: string): void {
   });
 } /*end handleDeleteGoal*/
 
-function getCategoryMeta(c: LifeGoalCategory) {
-  return LIFE_GOAL_CATEGORY_DETAILS[c] || LIFE_GOAL_CATEGORY_DETAILS.business;
-}
+function confirmClearGoals(): void {
+  $q.dialog({
+    title: "Azzera Tutti gli Obiettivi (Tabula Rasa)",
+    message:
+      "Sei sicuro di voler rimuovere tutti i macro-obiettivi salvati? L'elenco tornerà completamente vuoto.",
+    cancel: true,
+    dark: true
+  }).onOk(() => {
+    store.clearAllGoals();
+  });
+} /*end confirmClearGoals*/
 
 // ── 6. Timer Vuoto "Ma" (Fermo Biologico di 60 Secondi) ────────────────────────
 const timerSeconds = ref<number>(60);
@@ -334,7 +297,7 @@ function resetMaTimer(): void {
       </div>
     </q-card>
 
-    <!-- 3. I MACRO OBIETTIVI DELLE 4 AREE (BUSINESS, FAMIGLIA, FINANZE, PERSONALE) -->
+    <!-- 3. I MACRO OBIETTIVI DELLE AREE DI VITA -->
     <div class="row q-col-gutter-md q-mb-md">
       <div class="col-12">
         <q-card flat class="glass-panel q-pa-md border border-slate-700">
@@ -345,8 +308,21 @@ function resetMaTimer(): void {
               <q-icon name="stars" class="q-mr-xs" size="24px" />
               MACRO OBIETTIVI DI VITA (12-WEEK YEAR)
             </div>
-            <div class="text-caption text-grey-4">
-              Definite Chief Aim & Milestone Scadenzate
+            <div class="row items-center q-gutter-x-sm">
+              <span class="text-caption text-grey-4">
+                Definite Chief Aim & Milestone Scadenzate
+              </span>
+              <q-btn
+                v-if="store.plan.goals.length > 0"
+                flat
+                dense
+                size="sm"
+                color="negative"
+                icon="delete_sweep"
+                label="Azzera Obiettivi"
+                no-caps
+                @click="confirmClearGoals"
+              />
             </div>
           </div>
 
@@ -365,11 +341,11 @@ function resetMaTimer(): void {
                   <q-chip
                     dense
                     size="xs"
-                    :color="getCategoryMeta(goal.category).color"
-                    :icon="getCategoryMeta(goal.category).icon"
+                    :color="getGoalCategoryMeta(goal.category).color"
+                    :icon="getGoalCategoryMeta(goal.category).icon"
                     text-color="white"
                   >
-                    {{ getCategoryMeta(goal.category).label }}
+                    {{ getGoalCategoryMeta(goal.category).label }}
                   </q-chip>
                   <q-btn
                     flat
@@ -408,16 +384,33 @@ function resetMaTimer(): void {
             </div>
           </div>
 
+          <!-- EMPTY STATE: NESSUN OBIETTIVO (TABULA RASA) -->
           <div
             v-else
-            class="text-center q-pa-md bg-slate-800 rounded-borders text-grey-5"
+            class="text-center q-pa-lg bg-slate-800 rounded-borders text-grey-4"
           >
-            <div class="text-body2">Nessun macro-obiettivo registrato.</div>
-            <div class="text-caption"
-              >Usa il pulsante "+ Nuovo Obiettivo" in alto per definire
-              traguardi chiari (es. ProfessioneSicura a Torino il 26-28
-              Nov).</div
-            >
+            <q-icon
+              name="track_changes"
+              size="40px"
+              color="primary"
+              class="q-mb-xs"
+            />
+            <div class="text-subtitle1 text-weight-bold text-white q-mb-xs">
+              Nessun macro-obiettivo registrato
+            </div>
+            <div class="text-caption text-grey-4 q-mb-md">
+              Definisci i tuoi traguardi chiave per le 12 settimane. Clicca sul
+              pulsante sottostante per impostare il tuo primo obiettivo.
+            </div>
+            <q-btn
+              unelevated
+              color="primary"
+              icon="add"
+              label="Crea Primo Macro Obiettivo"
+              no-caps
+              class="text-weight-bold"
+              @click="showAddGoalDialog = true"
+            />
           </div>
         </q-card>
       </div>
@@ -526,106 +519,8 @@ function resetMaTimer(): void {
       </div>
     </div>
 
-    <!-- 5. DIALOG AGGIUNGI MACRO OBIETTIVO -->
-    <q-dialog v-model="showAddGoalDialog">
-      <q-card
-        class="bg-slate-900 text-white border border-slate-700"
-        style="min-width: 440px"
-      >
-        <q-card-section
-          class="row items-center justify-between border-b border-slate-800"
-        >
-          <div class="text-subtitle1 text-weight-bold row items-center">
-            <q-icon name="flag" color="primary" class="q-mr-sm" />
-            Nuovo Macro Obiettivo Trimestrale
-          </div>
-          <q-btn flat round dense icon="close" v-close-popup />
-        </q-card-section>
-
-        <q-card-section class="q-gutter-y-md q-pt-md">
-          <q-select
-            v-model="newGoal.category"
-            :options="goalCategoryOptions"
-            emit-value
-            map-options
-            label="Area di Vita"
-            outlined
-            dense
-            dark
-            class="bg-slate-800"
-          />
-
-          <q-input
-            v-model="newGoal.title"
-            label="Titolo Obiettivo (es. Presentazione Torino)"
-            outlined
-            dense
-            dark
-            class="bg-slate-800"
-          />
-
-          <q-input
-            v-model="newGoal.deadline"
-            label="Data Scadenza / Deadline (es. 2026-11-26)"
-            outlined
-            dense
-            dark
-            class="bg-slate-800"
-          />
-
-          <div class="row q-col-gutter-sm">
-            <div class="col-6">
-              <q-input
-                v-model.number="newGoal.targetDailyHours"
-                label="Ore al giorno previste"
-                type="number"
-                step="0.5"
-                min="0"
-                outlined
-                dense
-                dark
-                class="bg-slate-800"
-              />
-            </div>
-            <div class="col-6">
-              <q-input
-                v-model.number="newGoal.totalTargetHours"
-                label="Monte ore totale stimato"
-                type="number"
-                step="5"
-                min="0"
-                outlined
-                dense
-                dark
-                class="bg-slate-800"
-              />
-            </div>
-          </div>
-
-          <q-input
-            v-model="newGoal.notes"
-            label="Note operative / contesto"
-            outlined
-            dense
-            dark
-            type="textarea"
-            rows="2"
-            class="bg-slate-800"
-          />
-        </q-card-section>
-
-        <q-card-actions align="right" class="q-pa-md border-t border-slate-800">
-          <q-btn flat label="Annulla" color="grey-4" v-close-popup />
-          <q-btn
-            unelevated
-            label="Salva Obiettivo"
-            color="primary"
-            class="text-weight-bold"
-            @click="handleAddGoal"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <!-- 5. DIALOG MODULARE AGGIUNGI MACRO OBIETTIVO -->
+    <AddGoalDialog v-model="showAddGoalDialog" />
   </q-page>
 </template>
 

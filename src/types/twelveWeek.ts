@@ -285,35 +285,53 @@ export const PhysicalMetricsSchema = z.object({
 export type PhysicalMetrics = z.infer<typeof PhysicalMetricsSchema>;
 
 // ── 5. Macro Obiettivi di Vita del Trimestre (Life Goals) ──────────────────────
-export const LifeGoalCategorySchema = z.enum([
-  "family",
-  "personal",
-  "business",
-  "finance"
-]);
+export const LifeGoalCategorySchema = z.string();
 export type LifeGoalCategory = z.infer<typeof LifeGoalCategorySchema>;
 
 export const LIFE_GOAL_CATEGORY_DETAILS: Record<
-  LifeGoalCategory,
+  string,
   { label: string; icon: string; color: string }
 > = {
-  family: { label: "Clan Famiglia", icon: "favorite", color: "rose-5" },
-  personal: {
-    label: "Personale & Черепаха 🐢",
-    icon: "fitness_center",
-    color: "emerald-5"
-  },
   business: {
-    label: "Business (VersiliaCare / ProfessioneSicura)",
+    label: "Business & Carriera",
     icon: "business_center",
     color: "primary"
   },
+  personal: {
+    label: "Sviluppo Personale & Salute",
+    icon: "fitness_center",
+    color: "emerald-5"
+  },
+  family: {
+    label: "Famiglia & Relazioni",
+    icon: "favorite",
+    color: "rose-5"
+  },
   finance: {
-    label: "Finanze & Investimenti",
+    label: "Finanze & Risparmio",
     icon: "account_balance_wallet",
     color: "amber-6"
   }
 };
+
+/**
+ * Restituisce i metadati visivi di una categoria obiettivo, supportando anche categorie custom
+ */
+export function getGoalCategoryMeta(category: string): {
+  label: string;
+  icon: string;
+  color: string;
+} {
+  const meta = LIFE_GOAL_CATEGORY_DETAILS[category];
+  if (meta) {
+    return meta;
+  }
+  return {
+    label: category,
+    icon: "stars",
+    color: "cyan-7"
+  };
+} /*end getGoalCategoryMeta*/
 
 export const LifeGoalSchema = z.object({
   id: z.string(),

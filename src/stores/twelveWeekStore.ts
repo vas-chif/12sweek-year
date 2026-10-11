@@ -332,7 +332,30 @@ export const useTwelveWeekStore = defineStore("twelveWeek", () => {
     });
   } /*end setCycleStartDate*/
 
-  // ── Gestione Macro Obiettivi (Life Goals) ───────────────────────────────────
+  // ── Gestione Macro Obiettivi (Life Goals) & Categorie Dinamiche ─────────────
+  const customGoalCategories = ref<string[]>(
+    (() => {
+      try {
+        return JSON.parse(
+          localStorage.getItem("twelve_week_custom_goal_categories") || "[]"
+        );
+      } catch {
+        return [];
+      }
+    })()
+  );
+
+  function addCustomGoalCategory(categoryName: string): void {
+    const trimmed = categoryName.trim();
+    if (!trimmed) return;
+    if (!customGoalCategories.value.includes(trimmed)) {
+      customGoalCategories.value.push(trimmed);
+      localStorage.setItem(
+        "twelve_week_custom_goal_categories",
+        JSON.stringify(customGoalCategories.value)
+      );
+    }
+  } /*end addCustomGoalCategory*/
 
   function addLifeGoal(goal: Omit<LifeGoal, "id" | "completed">): void {
     const newGoal: LifeGoal = {
@@ -340,6 +363,15 @@ export const useTwelveWeekStore = defineStore("twelveWeek", () => {
       id: `goal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       completed: false
     };
+
+    // Auto-apprende e memorizza la nuova categoria se custom
+    if (
+      newGoal.category &&
+      !["business", "personal", "family", "finance"].includes(newGoal.category)
+    ) {
+      addCustomGoalCategory(newGoal.category);
+    }
+
     plan.value.goals.push(newGoal);
     saveToLocalStorage();
     Notify.create({
@@ -354,6 +386,12 @@ export const useTwelveWeekStore = defineStore("twelveWeek", () => {
     const goal = plan.value.goals.find(g => g.id === id);
     if (goal) {
       Object.assign(goal, patch);
+      if (
+        patch.category &&
+        !["business", "personal", "family", "finance"].includes(patch.category)
+      ) {
+        addCustomGoalCategory(patch.category);
+      }
       saveToLocalStorage();
     }
   } /*end updateLifeGoal*/
@@ -371,6 +409,17 @@ export const useTwelveWeekStore = defineStore("twelveWeek", () => {
       });
     }
   } /*end deleteLifeGoal*/
+
+  function clearAllGoals(): void {
+    plan.value.goals = [];
+    saveToLocalStorage();
+    Notify.create({
+      type: "info",
+      message: "Tutti gli obiettivi sono stati azzerati (Tabula Rasa)",
+      position: "top-right",
+      timeout: 1500
+    });
+  } /*end clearAllGoals*/
 
   // ── Gestione Protocollo Черепаха 🐢 a 3 Fasi ─────────────────────────────────
 
@@ -785,6 +834,9 @@ export const useTwelveWeekStore = defineStore("twelveWeek", () => {
     addLifeGoal,
     updateLifeGoal,
     deleteLifeGoal,
+    clearAllGoals,
+    customGoalCategories,
+    addCustomGoalCategory,
     setTurtlePhase,
     addPhysicalMeasurement,
     updateHabit,
