@@ -20,6 +20,8 @@
     "dev": "quasar dev",
     "build": "quasar build",
     "typecheck": "vue-tsc --noEmit",
+    "deploy": "yarn build && npx -y firebase-tools@latest deploy",
+    "deploy:hosting": "yarn build && npx -y firebase-tools@latest deploy --only hosting",
     "setup:hooks": "chmod +x hooks/*.sh && cp hooks/pre-commit-guard.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
     "postinstall": "quasar prepare --silent"
   },
